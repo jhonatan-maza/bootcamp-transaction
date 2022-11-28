@@ -99,7 +99,7 @@ public class TransactionController {
 				}).onErrorReturn(dataTransaction).onErrorResume(e -> Mono.just(dataTransaction))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
 
-		Mono<Transaction> newTransaction = transactionService.saveDepositAndWithdraw(dataTransaction, "fixed-term");
+		Mono<Transaction> newTransaction = transactionService.saveDepositAndWithdraw(dataTransaction);
 		return newTransaction;
 	}
 
@@ -114,7 +114,7 @@ public class TransactionController {
 				}).onErrorReturn(dataTransaction).onErrorResume(e -> Mono.just(dataTransaction))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
 
-		Mono<Transaction> newTransaction = transactionService.savePayment(dataTransaction, "fixed-term");
+		Mono<Transaction> newTransaction = transactionService.savePayment(dataTransaction);
 		return newTransaction;
 	}
 

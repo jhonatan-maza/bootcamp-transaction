@@ -74,19 +74,19 @@ public class TransactionServiceImpl implements TransactionService {
     public Mono<Transaction> searchByActiveAccount(Transaction dataTransaction){
         Mono<Transaction> savingsAccount = transactionRepository
                 .findAll()
-                .filter(x -> x.getAccountNumber().equals(dataTransaction.getAccountNumber() ) && x.isActive())
+                .filter(x ->  x.isActive())
                 .next();
         return savingsAccount;
     }
     public Mono<Transaction> searchByPasiveAccount(Transaction dataTransaction){
         Mono<Transaction> savingsAccount = transactionRepository
                 .findAll()
-                .filter(x -> x.getAccountNumber().equals(dataTransaction.getAccountNumber() ) && x.isPassive())
+                .filter(x -> x.isPassive())
                 .next();
         return savingsAccount;
     }
     @Override
-    public Mono<Transaction> saveDepositAndWithdraw(Transaction dataTransaction, String accountType) {
+    public Mono<Transaction> saveDepositAndWithdraw(Transaction dataTransaction) {
         Mono<Transaction> transaction = Mono.empty();
         if (dataTransaction.isPassive()) {
             transaction = this.searchByPasiveAccount(dataTransaction);
@@ -97,16 +97,13 @@ public class TransactionServiceImpl implements TransactionService {
                 .switchIfEmpty(transactionRepository.save(dataTransaction));
     }
 
-    public Mono<Transaction> savePayment(Transaction dataTransaction, String accountType) {
-        Mono<Transaction> transaction = Mono.empty();
-        if (dataTransaction.isActive()) {
+    public Mono<Transaction> savePayment(Transaction dataTransaction) {
+            Mono<Transaction> transaction = Mono.empty();
             transaction = this.searchByActiveAccount(dataTransaction);
-
             dataTransaction.setStatus("active");
             dataTransaction.setDeposit(true);
             dataTransaction.setWithdraw(false);
 
-        }
         return transaction
                 .flatMap(__ -> Mono.<Transaction>error(new Error("No se encontro la cuenta bancaria")))
                 .switchIfEmpty(transactionRepository.save(dataTransaction));
