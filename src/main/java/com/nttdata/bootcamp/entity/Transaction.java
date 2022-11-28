@@ -16,7 +16,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Document(collection = "active")
+@Document(collection = "transaction")
 public class Transaction {
 
     @Id
@@ -24,6 +24,8 @@ public class Transaction {
 
     private String dni;
     private String accountNumber;
+    private String typeCustomer;
+    private String accountType;
 
     private String transactionNumber;
 

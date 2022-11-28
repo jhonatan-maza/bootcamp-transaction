@@ -33,8 +33,8 @@ public class TransactionController {
 	}
 
 	//Transactions search by accountNumber
-	@GetMapping("/findAllTransactiosByNumber/{accountNumber}")
-	public Flux<Transaction> findAllTransactiosByNumber(@PathVariable("accountNumber") String accountNumber) {
+	@GetMapping("/findAllTransactionByNumber/{accountNumber}")
+	public Flux<Transaction> findAllTransactionByNumber(@PathVariable("accountNumber") String accountNumber) {
 		Flux<Transaction> transactions = transactionService.findByAccountNumber(accountNumber);
 		LOGGER.info("Registered Actives Products by customer of dni: "+accountNumber +"-" + transactions);
 		return transactions;
@@ -64,29 +64,40 @@ public class TransactionController {
 
 	//Update active
 	@PutMapping("/update/{numberTransaction}")
-	public ResponseEntity<Mono<?>> updateTransaction(@PathVariable("numberTransaction") String numberTransaction,
-													   @Valid @RequestBody Transaction dataTransaction) {
+	public Mono<Transaction> updateTransaction(@PathVariable("numberTransaction") String numberTransaction,
+									 @Valid @RequestBody Transaction dataTransaction) {
 		Mono.just(dataTransaction).doOnNext(t -> {
-					dataTransaction.setAccountNumber(numberTransaction);
+
+					t.setAccountNumber(numberTransaction);
 					t.setModificationDate(new Date());
 
 				}).onErrorReturn(dataTransaction).onErrorResume(e -> Mono.just(dataTransaction))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
 
-		Mono<Transaction> transactionMono = transactionService.update(dataTransaction);
-
-		if (transactionMono != null) {
-			return new ResponseEntity<>(transactionMono, HttpStatus.CREATED);
-		}
-		return new ResponseEntity<>(Mono.just(new Transaction()), HttpStatus.I_AM_A_TEAPOT);
+		Mono<Transaction> updateTransaction = transactionService.update(dataTransaction);
+		return updateTransaction;
 	}
+
 
 	//Delete customer
 	@DeleteMapping("/delete/{numberTransaction}")
-	public ResponseEntity<Mono<Void>> deleteTransaction(@PathVariable("numberTransaction") String numberTransaction) {
+	public Mono<Void> deleteTransaction(@PathVariable("numberTransaction") String numberTransaction) {
 		LOGGER.info("Deleting transaction by numberTransaction: " + numberTransaction);
 		Mono<Void> delete = transactionService.delete(numberTransaction);
-		return ResponseEntity.noContent().build();
+		return delete;
+
+	}
+	@PostMapping(value = "/savePayment")
+	public Mono<Transaction> savePayment(@RequestBody Transaction dataTransaction){
+		boolean typeTransaction= dataTransaction.getDeposit();
+		String typeAccount= dataTransaction.getAccountType();
+		Mono<Transaction> transactionMono = transactionService.save(dataTransaction);
+
+		if(typeTransaction && typeAccount.compareTo("CREDITO") == 0) {
+			return transactionMono;
+		}
+		return transactionMono;
+
 	}
 
 }
