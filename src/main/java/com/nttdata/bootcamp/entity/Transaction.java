@@ -25,7 +25,8 @@ public class Transaction {
     private String dni;
     private String accountNumber;
     private String typeCustomer;
-    private String accountType;
+    private boolean active;
+    private boolean passive;
 
     private String transactionNumber;
 

@@ -26,7 +26,7 @@ public class TransactionController {
 
 	//Transactions search
 	@GetMapping("/")
-	public Flux<Transaction> findAllActives() {
+	public Flux<Transaction> findAllTransactions() {
 		Flux<Transaction> transactions = transactionService.findAll();
 		LOGGER.info("Registered transactions: " + transactions);
 		return transactions;
@@ -68,7 +68,7 @@ public class TransactionController {
 									 @Valid @RequestBody Transaction dataTransaction) {
 		Mono.just(dataTransaction).doOnNext(t -> {
 
-					t.setAccountNumber(numberTransaction);
+					t.setTransactionNumber(numberTransaction);
 					t.setModificationDate(new Date());
 
 				}).onErrorReturn(dataTransaction).onErrorResume(e -> Mono.just(dataTransaction))
@@ -87,17 +87,35 @@ public class TransactionController {
 		return delete;
 
 	}
+
+	@PostMapping(value = "/saveDepositAndWithdraw")
+	public Mono<Transaction> saveDepositAndWithdraw(@Valid @RequestBody Transaction dataTransaction){
+
+		Mono.just(dataTransaction).doOnNext(t -> {
+					t.setPassive(true);
+					t.setCreationDate(new Date());
+					t.setModificationDate(new Date());
+
+				}).onErrorReturn(dataTransaction).onErrorResume(e -> Mono.just(dataTransaction))
+				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+		Mono<Transaction> newTransaction = transactionService.saveDepositAndWithdraw(dataTransaction, "fixed-term");
+		return newTransaction;
+	}
+
 	@PostMapping(value = "/savePayment")
-	public Mono<Transaction> savePayment(@RequestBody Transaction dataTransaction){
-		boolean typeTransaction= dataTransaction.getDeposit();
-		String typeAccount= dataTransaction.getAccountType();
-		Mono<Transaction> transactionMono = transactionService.save(dataTransaction);
+	public Mono<Transaction> savePayment(@Valid @RequestBody Transaction dataTransaction){
 
-		if(typeTransaction && typeAccount.compareTo("CREDITO") == 0) {
-			return transactionMono;
-		}
-		return transactionMono;
+		Mono.just(dataTransaction).doOnNext(t -> {
+					t.setActive(true);
+					t.setCreationDate(new Date());
+					t.setModificationDate(new Date());
 
+				}).onErrorReturn(dataTransaction).onErrorResume(e -> Mono.just(dataTransaction))
+				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+		Mono<Transaction> newTransaction = transactionService.savePayment(dataTransaction, "fixed-term");
+		return newTransaction;
 	}
 
 }
