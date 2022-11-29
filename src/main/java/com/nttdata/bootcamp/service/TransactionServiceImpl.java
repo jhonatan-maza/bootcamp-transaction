@@ -71,35 +71,35 @@ public class TransactionServiceImpl implements TransactionService {
             return Mono.<Void>error(new Error("La transaccion numero" + Number+ " NO EXISTE"));
         }
     }
-    public Mono<Transaction> searchByActiveAccount(Transaction dataTransaction){
-        Mono<Transaction> savingsAccount = transactionRepository
+
+    public Mono<Transaction> searchByPasiveAccount(String number){
+        Mono<Transaction> savingTransaction = transactionRepository
                 .findAll()
-                .filter(x ->  x.isActive())
+                .filter(x -> x.isPassive() && x.getAccountNumber().equals(number))
                 .next();
-        return savingsAccount;
+        return savingTransaction;
+
     }
-    public Mono<Transaction> searchByPasiveAccount(Transaction dataTransaction){
-        Mono<Transaction> savingsAccount = transactionRepository
+    public Mono<Transaction> searchByActiveAccount(String number){
+        Mono<Transaction> savingTransaction = transactionRepository
                 .findAll()
-                .filter(x -> x.isPassive())
+                .filter(x ->  x.isActive() && x.getAccountNumber().equals(number))
                 .next();
-        return savingsAccount;
+        return savingTransaction;
     }
     @Override
     public Mono<Transaction> saveDepositAndWithdraw(Transaction dataTransaction) {
         Mono<Transaction> transaction = Mono.empty();
-        if (dataTransaction.isPassive()) {
-            transaction = this.searchByPasiveAccount(dataTransaction);
+            transaction = this.searchByPasiveAccount(dataTransaction.getAccountNumber());
             dataTransaction.setStatus("active");
-        }
         return transaction
                 .flatMap(__ -> Mono.<Transaction>error(new Error("No se encontro la cuenta bancaria")))
                 .switchIfEmpty(transactionRepository.save(dataTransaction));
     }
-
+    @Override
     public Mono<Transaction> savePayment(Transaction dataTransaction) {
             Mono<Transaction> transaction = Mono.empty();
-            transaction = this.searchByActiveAccount(dataTransaction);
+            transaction = this.searchByActiveAccount(dataTransaction.getAccountNumber());
             dataTransaction.setStatus("active");
             dataTransaction.setDeposit(true);
             dataTransaction.setWithdraw(false);
