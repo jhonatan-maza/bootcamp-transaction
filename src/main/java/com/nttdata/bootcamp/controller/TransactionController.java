@@ -32,17 +32,17 @@ public class TransactionController {
 		return transactions;
 	}
 
-	//Transactions search by accountNumber
+	//Transactions by AccountNumber
 	@GetMapping("/findAllTransactionByNumber/{accountNumber}")
 	public Flux<Transaction> findAllTransactionByNumber(@PathVariable("accountNumber") String accountNumber) {
 		Flux<Transaction> transactions = transactionService.findByAccountNumber(accountNumber);
-		LOGGER.info("Registered Actives Products by customer of dni: "+accountNumber +"-" + transactions);
+		LOGGER.info("Registered Transactions of account number: "+accountNumber +"-" + transactions);
 		return transactions;
 	}
 
-	//Search for active by AccountNumber
-	@GetMapping("/findbyNumber/{numberTransaction}")
-	public Mono<Transaction> findByAccountNumber(@PathVariable("numberTransaction") String numberTransaction) {
+	//Transaction  by transactionNumber
+	@GetMapping("/findByTransactionNumber/{numberTransaction}")
+	public Mono<Transaction> findByTransactionNumber(@PathVariable("numberTransaction") String numberTransaction) {
 		LOGGER.info("Searching transaction by numberTransaction: " + numberTransaction);
 		return transactionService.findByNumber(numberTransaction);
 	}

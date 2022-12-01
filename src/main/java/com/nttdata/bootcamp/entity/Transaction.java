@@ -27,12 +27,10 @@ public class Transaction {
     private String typeCustomer;
     private boolean active;
     private boolean passive;
-
-    private String transactionNumber;
-
     private Boolean deposit;
     private Boolean withdraw;
 
+    private String transactionNumber;
     private Double amount;
     private String status;
 
