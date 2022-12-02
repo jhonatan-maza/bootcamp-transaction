@@ -1,5 +1,7 @@
 package com.nttdata.bootcamp.controller;
 
+import com.nttdata.bootcamp.entity.Commission;
+import com.nttdata.bootcamp.service.CommissionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.nttdata.bootcamp.service.TransactionService;
@@ -23,6 +25,8 @@ public class TransactionController {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TransactionController.class);
 	@Autowired
 	private TransactionService transactionService;
+	@Autowired
+	private CommissionService commissionService;
 
 	//Transactions search
 	@GetMapping("/")
@@ -48,7 +52,7 @@ public class TransactionController {
 	}
 
 	//Save transaction
-	@PostMapping(value = "/save")
+	@PostMapping(value = "/saveTransaction")
 	public Mono<Transaction> saveTransaction(@RequestBody Transaction dataTransaction){
 		Mono.just(dataTransaction).doOnNext(t -> {
 
@@ -63,7 +67,7 @@ public class TransactionController {
 	}
 
 	//Update active
-	@PutMapping("/update/{numberTransaction}")
+	@PutMapping("/updateTransaction/{numberTransaction}")
 	public Mono<Transaction> updateTransaction(@PathVariable("numberTransaction") String numberTransaction,
 									 @Valid @RequestBody Transaction dataTransaction) {
 		Mono.just(dataTransaction).doOnNext(t -> {
@@ -80,7 +84,7 @@ public class TransactionController {
 
 
 	//Delete customer
-	@DeleteMapping("/delete/{numberTransaction}")
+	@DeleteMapping("/deleteTransaction/{numberTransaction}")
 	public Mono<Void> deleteTransaction(@PathVariable("numberTransaction") String numberTransaction) {
 		LOGGER.info("Deleting transaction by numberTransaction: " + numberTransaction);
 		Mono<Void> delete = transactionService.delete(numberTransaction);
@@ -88,18 +92,32 @@ public class TransactionController {
 
 	}
 
-	@PostMapping(value = "/saveDepositAndWithdraw")
-	public Mono<Transaction> saveDepositAndWithdraw(@Valid @RequestBody Transaction dataTransaction){
+	@PostMapping(value = "/saveDeposit")
+	public Mono<Transaction> saveDeposit(@Valid @RequestBody Transaction dataTransaction){
 
 		Mono.just(dataTransaction).doOnNext(t -> {
-					t.setPassive(true);
+					t.setDeposit(true);
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
 
 				}).onErrorReturn(dataTransaction).onErrorResume(e -> Mono.just(dataTransaction))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
 
-		Mono<Transaction> newTransaction = transactionService.saveDepositAndWithdraw(dataTransaction);
+		Mono<Transaction> newTransaction = transactionService.saveTransaction(dataTransaction, "deposit");
+		return newTransaction;
+	}
+	@PostMapping(value = "/savedWithdraw")
+	public Mono<Transaction> savedWithdraw(@Valid @RequestBody Transaction dataTransaction){
+
+		Mono.just(dataTransaction).doOnNext(t -> {
+					t.setWithdraw(true);
+					t.setCreationDate(new Date());
+					t.setModificationDate(new Date());
+
+				}).onErrorReturn(dataTransaction).onErrorResume(e -> Mono.just(dataTransaction))
+				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+		Mono<Transaction> newTransaction = transactionService.saveTransaction(dataTransaction, "withdraw");
 		return newTransaction;
 	}
 
@@ -107,15 +125,86 @@ public class TransactionController {
 	public Mono<Transaction> savePayment(@Valid @RequestBody Transaction dataTransaction){
 
 		Mono.just(dataTransaction).doOnNext(t -> {
-					t.setActive(true);
+					t.setDeposit(true);
 					t.setCreationDate(new Date());
 					t.setModificationDate(new Date());
 
 				}).onErrorReturn(dataTransaction).onErrorResume(e -> Mono.just(dataTransaction))
 				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
 
-		Mono<Transaction> newTransaction = transactionService.savePayment(dataTransaction);
+		Mono<Transaction> newTransaction = transactionService.saveTransaction(dataTransaction, "payment");
 		return newTransaction;
 	}
+
+	@PostMapping(value = "/saveConsumption/{balance}")
+	public Mono<Transaction> saveConsumption(@Valid @RequestBody Transaction dataTransaction, @PathVariable("balance") Double balance ){
+		Mono<Transaction> newTransaction = transactionService.saveConsumption(dataTransaction, balance);
+		return newTransaction;
+	}
+
+
+	@GetMapping("/findAllCommission")
+	public Flux<Commission> findAllCommission() {
+		Flux<Commission> commissions = commissionService.findAll();
+		LOGGER.info("Registered commissions: " + commissions);
+		return commissions;
+	}
+
+	//Transactions by AccountNumber
+	@GetMapping("/findAllCommissionByNumber/{accountNumber}")
+	public Flux<Commission> findAllCommissionByAccountNumber(@PathVariable("accountNumber") String accountNumber) {
+		Flux<Commission> comissions = commissionService.findByAccountNumber(accountNumber);
+		LOGGER.info("Registered commission of account number: "+accountNumber +"-" + comissions);
+		return comissions;
+	}
+
+	//Transaction  by transactionNumber
+	@GetMapping("/findByTransactionNumber/{numberTransaction}")
+	public Mono<Commission> findCommissionByTransactionNumber(@PathVariable("numberTransaction") String numberTransaction) {
+		LOGGER.info("Searching transaction by numberTransaction: " + numberTransaction);
+		return commissionService.findByNumber(numberTransaction);
+	}
+
+	//Save transaction
+	@PostMapping(value = "/saveCommission")
+	public Mono<Commission> saveCommission(@RequestBody Commission dataCommission){
+		Mono.just(dataCommission).doOnNext(t -> {
+
+					t.setCreationDate(new Date());
+					t.setModificationDate(new Date());
+
+				}).onErrorReturn(dataCommission).onErrorResume(e -> Mono.just(dataCommission))
+				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+		Mono<Commission> commissionMono = commissionService.save(dataCommission);
+		return commissionMono;
+	}
+
+	//Update active
+	@PutMapping("/updateCommission/{numberCode}")
+	public Mono<Commission> updateCommission(@PathVariable("numberCode") String numberCode,
+											   @Valid @RequestBody Commission dataCommission) {
+		Mono.just(dataCommission).doOnNext(t -> {
+
+					t.setCode(numberCode);
+					t.setModificationDate(new Date());
+
+				}).onErrorReturn(dataCommission).onErrorResume(e -> Mono.just(dataCommission))
+				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+		Mono<Commission> updateCommission = commissionService.update(dataCommission);
+		return updateCommission;
+	}
+
+
+	//Delete customer
+	@DeleteMapping("/deleteCommission/{numberCode}")
+	public Mono<Void> deleteCommission(@PathVariable("numberCode") String numberCode) {
+		LOGGER.info("Deleting Commission by numberTransaction: " + numberCode);
+		Mono<Void> delete = transactionService.delete(numberCode);
+		return delete;
+
+	}
+
 
 }

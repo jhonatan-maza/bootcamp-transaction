@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Date;
+
 //Service implementation
 @Service
 public class TransactionServiceImpl implements TransactionService {
@@ -72,41 +74,81 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    public Mono<Transaction> searchByPasiveAccount(String number){
+    /*public Mono<Transaction> searchByPasiveAccount(Transaction dataTransaction){
         Mono<Transaction> savingTransaction = transactionRepository
                 .findAll()
-                .filter(x -> x.isPassive() && x.getAccountNumber().equals(number))
+                .filter(x -> dataTransaction.getPassiveFixedTerm() ||dataTransaction.getPassiveSaving() || dataTransaction.getPassiveCurrentAccount())
                 .next();
         return savingTransaction;
 
     }
-    public Mono<Transaction> searchByActiveAccount(String number){
+    /*public Mono<Transaction> searchByActiveAccount(Transaction dataTransaction){
         Mono<Transaction> savingTransaction = transactionRepository
                 .findAll()
-                .filter(x ->  x.isActive() && x.getAccountNumber().equals(number))
+                .filter(x -> dataTransaction.getActiveBusiness() ||  dataTransaction.getActiveStaff() || dataTransaction.getActiveCreditCard() )
                 .next();
         return savingTransaction;
-    }
+    }*/
+    /*public Mono<Transaction> searchByActiveAccountBalance(Transaction dataTransaction, Double balance){
+        Mono<Transaction> savingTransaction = transactionRepository
+                .findAll()
+                .filter(x -> dataTransaction.getActiveCreditCard() && dataTransaction.getAmount()<=balance)
+                .next();
+        return savingTransaction;
+    }*/
     @Override
-    public Mono<Transaction> saveDepositAndWithdraw(Transaction dataTransaction) {
-        Mono<Transaction> transaction = Mono.empty();
-            transaction = this.searchByPasiveAccount(dataTransaction.getAccountNumber());
-            dataTransaction.setStatus("active");
-        return transaction
-                .flatMap(__ -> Mono.<Transaction>error(new Error("No se encontro la cuenta bancaria")))
-                .switchIfEmpty(transactionRepository.save(dataTransaction));
-    }
-    @Override
-    public Mono<Transaction> savePayment(Transaction dataTransaction) {
-            Mono<Transaction> transaction = Mono.empty();
-            transaction = this.searchByActiveAccount(dataTransaction.getAccountNumber());
-            dataTransaction.setStatus("active");
+    public Mono<Transaction> saveTransaction(Transaction dataTransaction,String typeTransaction ) {
+        /*Mono<Transaction> transaction = Mono.empty();
+
+        if(typeAccount.equals("PASSIVE")){
+            transaction = this.searchByPasiveAccount(dataTransaction);
+        }else if(typeAccount.equals("ACTIVE")){
+            transaction = this.searchByActiveAccount(dataTransaction);
+        }*/
+
+        dataTransaction.setStatus("active");
+
+        if(typeTransaction.equals("deposit")){
             dataTransaction.setDeposit(true);
             dataTransaction.setWithdraw(false);
+        }
+        else if(typeTransaction.equals("withdraw")){
+            dataTransaction.setDeposit(false);
+            dataTransaction.setWithdraw(true);
+        }
+        else if(typeTransaction.equals("payment")){
+            dataTransaction.setDeposit(true);
+            dataTransaction.setWithdraw(false);
+        }
+
+
+        /*return transaction
+                .flatMap(__ -> Mono.<Transaction>error(new Error("No se encontro la cuenta bancaria")))
+                .switchIfEmpty(transactionRepository.save(dataTransaction));*/
+        return transactionRepository.save(dataTransaction);
+
+
+
+    }
+    @Override
+    public Mono<Transaction> saveConsumption(Transaction dataTransaction, Double balance ) {
+
+        Mono<Transaction> transaction = Mono.empty();
+        if(balance<dataTransaction.getAmount())
+            transaction= Mono.just(dataTransaction);
+
+        dataTransaction.setStatus("active");
+        dataTransaction.setDeposit(false);
+        dataTransaction.setWithdraw(true);
+        dataTransaction.setCreationDate(new Date());
+        dataTransaction.setModificationDate(new Date());
+
 
         return transaction
-                .flatMap(__ -> Mono.<Transaction>error(new Error("No se encontro la cuenta bancaria")))
+                .flatMap(__ -> Mono.<Transaction>error(new Error("The customer doesnt have enought credit for this transaction")))
                 .switchIfEmpty(transactionRepository.save(dataTransaction));
+
+
     }
 
 

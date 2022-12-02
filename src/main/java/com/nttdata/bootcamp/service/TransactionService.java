@@ -14,8 +14,7 @@ public interface TransactionService {
     public Mono<Transaction> save(Transaction active);
     public Mono<Transaction> update(Transaction dataActive);
     public Mono<Void> delete(String accountNumber);
-
-    public Mono<Transaction> saveDepositAndWithdraw(Transaction dataTransaction);
-    public Mono<Transaction> savePayment(Transaction dataTransaction);
+    public Mono<Transaction> saveTransaction(Transaction dataTransaction, String typeTransaction);
+    public Mono<Transaction> saveConsumption(Transaction dataTransaction, Double balance );
 
 }

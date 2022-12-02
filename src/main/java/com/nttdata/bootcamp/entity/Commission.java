@@ -16,8 +16,8 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Document(collection = "transaction")
-public class Transaction {
+@Document(collection = "commission")
+public class Commission {
 
     @Id
     private String id;
@@ -26,12 +26,9 @@ public class Transaction {
     private String accountNumber;
     private String typeAccount;
 
-
-    private Boolean deposit;
-    private Boolean withdraw;
-
     private String transactionNumber;
-    private Double amount;
+    private String code;
+    private String amount;
     private String status;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -41,5 +38,6 @@ public class Transaction {
     @JsonFormat(pattern = "yyyy-MM-dd")
     @LastModifiedDate
     private Date modificationDate;
+
 
 }
