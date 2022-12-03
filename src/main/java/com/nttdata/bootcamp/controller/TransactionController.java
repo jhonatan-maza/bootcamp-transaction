@@ -142,6 +142,13 @@ public class TransactionController {
 		return newTransaction;
 	}
 
+	@GetMapping("/getCountTransaction/{accountNumber}")
+	//get count of transaction
+	public Mono<Long> getCountTransaction(@PathVariable("accountNumber") String accountNumber){
+		Flux<Transaction> transactions= findAllTransactionByNumber(accountNumber);
+		return transactions.count();
+	}
+
 
 	@GetMapping("/findAllCommission")
 	public Flux<Commission> findAllCommission() {
