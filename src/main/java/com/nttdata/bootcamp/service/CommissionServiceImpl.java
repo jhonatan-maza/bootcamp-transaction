@@ -5,9 +5,12 @@ import com.nttdata.bootcamp.entity.Transaction;
 import com.nttdata.bootcamp.repository.CommissionRepository;
 import com.nttdata.bootcamp.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Date;
+@Service
 public class CommissionServiceImpl implements CommissionService{
 
     @Autowired
@@ -33,6 +36,14 @@ public class CommissionServiceImpl implements CommissionService{
                 .filter(x -> x.getCode().equals(number))
                 .next();
         return commissionMono;
+    }
+
+    @Override
+    public Flux<Commission> findByDate(String accountNumber, Date date1,  Date date2) {
+        Flux<Commission> commissions = commissionRepository
+                .findAll()
+                .filter(x -> x.getAccountNumber().equals(accountNumber) && x.getCreationDate().after(date1) && x.getCreationDate().before(date2));
+        return commissions;
     }
 
     @Override

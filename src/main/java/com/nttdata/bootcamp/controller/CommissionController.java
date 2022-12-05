@@ -5,11 +5,12 @@ import com.nttdata.bootcamp.service.CommissionService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.nttdata.bootcamp.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 import java.util.Date;
@@ -18,12 +19,10 @@ import java.util.Date;
 @RequestMapping(value = "/commission")
 public class CommissionController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionController.class);
-    @Autowired
-    private TransactionService transactionService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommissionController.class);
+
     @Autowired
     private CommissionService commissionService;
-
 
 
     @GetMapping("/findAllCommission")
@@ -42,11 +41,21 @@ public class CommissionController {
     }
     @CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetCommission")
     //Transaction  by transactionNumber
-    @GetMapping("/findByTransactionNumber/{numberTransaction}")
+    @GetMapping("/findByCommissionNumber/{numberTransaction}")
     public Mono<Commission> findCommissionByTransactionNumber(@PathVariable("numberTransaction") String numberTransaction) {
         LOGGER.info("Searching transaction by numberTransaction: " + numberTransaction);
         return commissionService.findByNumber(numberTransaction);
     }
+
+    @CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetCommission")
+    //Transaction  by transactionNumber
+    @GetMapping("/findAllCommissionByDate/{numberAccount}/{date1}/{date2}")
+    public Flux<Commission> findAllCommissionByDate(@PathVariable("numberAccount") String numberAccount,
+            @PathVariable("date1") Date date1,@PathVariable("date2") Date date2) {
+        LOGGER.info("Searching commission by accountNumber: " + numberAccount);
+        return commissionService.findByDate(numberAccount, date1, date2);
+    }
+
     @CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetCommission")
     //Save transaction
     @PostMapping(value = "/saveCommission")
@@ -84,7 +93,7 @@ public class CommissionController {
     @DeleteMapping("/deleteCommission/{numberCode}")
     public Mono<Void> deleteCommission(@PathVariable("numberCode") String numberCode) {
         LOGGER.info("Deleting Commission by numberTransaction: " + numberCode);
-        Mono<Void> delete = transactionService.delete(numberCode);
+        Mono<Void> delete = commissionService.delete(numberCode);
         return delete;
 
     }

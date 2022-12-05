@@ -28,7 +28,7 @@ public class TransactionController {
 	private TransactionService transactionService;
 
 	//Transactions search
-	@GetMapping("/")
+	@GetMapping("/findAllTransactions")
 	public Flux<Transaction> findAllTransactions() {
 		Flux<Transaction> transactions = transactionService.findAll();
 		LOGGER.info("Registered transactions: " + transactions);
