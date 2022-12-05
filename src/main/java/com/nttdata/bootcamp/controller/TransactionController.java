@@ -2,6 +2,7 @@ package com.nttdata.bootcamp.controller;
 
 import com.nttdata.bootcamp.entity.Commission;
 import com.nttdata.bootcamp.service.CommissionService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.nttdata.bootcamp.service.TransactionService;
@@ -25,8 +26,6 @@ public class TransactionController {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TransactionController.class);
 	@Autowired
 	private TransactionService transactionService;
-	@Autowired
-	private CommissionService commissionService;
 
 	//Transactions search
 	@GetMapping("/")
@@ -45,6 +44,7 @@ public class TransactionController {
 	}
 
 	//Transaction  by transactionNumber
+	@CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetTransaction")
 	@GetMapping("/findByTransactionNumber/{numberTransaction}")
 	public Mono<Transaction> findByTransactionNumber(@PathVariable("numberTransaction") String numberTransaction) {
 		LOGGER.info("Searching transaction by numberTransaction: " + numberTransaction);
@@ -52,6 +52,7 @@ public class TransactionController {
 	}
 
 	//Save transaction
+	@CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetTransaction")
 	@PostMapping(value = "/saveTransaction")
 	public Mono<Transaction> saveTransaction(@RequestBody Transaction dataTransaction){
 		Mono.just(dataTransaction).doOnNext(t -> {
@@ -67,6 +68,7 @@ public class TransactionController {
 	}
 
 	//Update active
+	@CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetTransaction")
 	@PutMapping("/updateTransaction/{numberTransaction}")
 	public Mono<Transaction> updateTransaction(@PathVariable("numberTransaction") String numberTransaction,
 									 @Valid @RequestBody Transaction dataTransaction) {
@@ -84,6 +86,7 @@ public class TransactionController {
 
 
 	//Delete customer
+	@CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetTransaction")
 	@DeleteMapping("/deleteTransaction/{numberTransaction}")
 	public Mono<Void> deleteTransaction(@PathVariable("numberTransaction") String numberTransaction) {
 		LOGGER.info("Deleting transaction by numberTransaction: " + numberTransaction);
@@ -91,7 +94,7 @@ public class TransactionController {
 		return delete;
 
 	}
-
+	@CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetTransaction")
 	@PostMapping(value = "/saveDeposit")
 	public Mono<Transaction> saveDeposit(@Valid @RequestBody Transaction dataTransaction){
 
@@ -106,6 +109,7 @@ public class TransactionController {
 		Mono<Transaction> newTransaction = transactionService.saveTransaction(dataTransaction, "deposit");
 		return newTransaction;
 	}
+	@CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetTransaction")
 	@PostMapping(value = "/savedWithdraw")
 	public Mono<Transaction> savedWithdraw(@Valid @RequestBody Transaction dataTransaction){
 
@@ -121,6 +125,7 @@ public class TransactionController {
 		return newTransaction;
 	}
 
+	@CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetTransaction")
 	@PostMapping(value = "/savePayment")
 	public Mono<Transaction> savePayment(@Valid @RequestBody Transaction dataTransaction){
 
@@ -135,7 +140,7 @@ public class TransactionController {
 		Mono<Transaction> newTransaction = transactionService.saveTransaction(dataTransaction, "payment");
 		return newTransaction;
 	}
-
+	@CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetTransaction")
 	@PostMapping(value = "/saveConsumption/{balance}")
 	public Mono<Transaction> saveConsumption(@Valid @RequestBody Transaction dataTransaction, @PathVariable("balance") Double balance ){
 		Mono<Transaction> newTransaction = transactionService.saveConsumption(dataTransaction, balance);
@@ -150,67 +155,10 @@ public class TransactionController {
 	}
 
 
-	@GetMapping("/findAllCommission")
-	public Flux<Commission> findAllCommission() {
-		Flux<Commission> commissions = commissionService.findAll();
-		LOGGER.info("Registered commissions: " + commissions);
-		return commissions;
-	}
-
-	//Transactions by AccountNumber
-	@GetMapping("/findAllCommissionByNumber/{accountNumber}")
-	public Flux<Commission> findAllCommissionByAccountNumber(@PathVariable("accountNumber") String accountNumber) {
-		Flux<Commission> comissions = commissionService.findByAccountNumber(accountNumber);
-		LOGGER.info("Registered commission of account number: "+accountNumber +"-" + comissions);
-		return comissions;
-	}
-
-	//Transaction  by transactionNumber
-	@GetMapping("/findByTransactionNumber/{numberTransaction}")
-	public Mono<Commission> findCommissionByTransactionNumber(@PathVariable("numberTransaction") String numberTransaction) {
-		LOGGER.info("Searching transaction by numberTransaction: " + numberTransaction);
-		return commissionService.findByNumber(numberTransaction);
-	}
-
-	//Save transaction
-	@PostMapping(value = "/saveCommission")
-	public Mono<Commission> saveCommission(@RequestBody Commission dataCommission){
-		Mono.just(dataCommission).doOnNext(t -> {
-
-					t.setCreationDate(new Date());
-					t.setModificationDate(new Date());
-
-				}).onErrorReturn(dataCommission).onErrorResume(e -> Mono.just(dataCommission))
-				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
-
-		Mono<Commission> commissionMono = commissionService.save(dataCommission);
-		return commissionMono;
-	}
-
-	//Update active
-	@PutMapping("/updateCommission/{numberCode}")
-	public Mono<Commission> updateCommission(@PathVariable("numberCode") String numberCode,
-											   @Valid @RequestBody Commission dataCommission) {
-		Mono.just(dataCommission).doOnNext(t -> {
-
-					t.setCode(numberCode);
-					t.setModificationDate(new Date());
-
-				}).onErrorReturn(dataCommission).onErrorResume(e -> Mono.just(dataCommission))
-				.onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
-
-		Mono<Commission> updateCommission = commissionService.update(dataCommission);
-		return updateCommission;
-	}
-
-
-	//Delete customer
-	@DeleteMapping("/deleteCommission/{numberCode}")
-	public Mono<Void> deleteCommission(@PathVariable("numberCode") String numberCode) {
-		LOGGER.info("Deleting Commission by numberTransaction: " + numberCode);
-		Mono<Void> delete = transactionService.delete(numberCode);
-		return delete;
-
+	private Mono<Transaction> fallBackGetCurrent(Exception e){
+		Transaction activeStaff= new Transaction();
+		Mono<Transaction> staffMono= Mono.just(activeStaff);
+		return staffMono;
 	}
 
 

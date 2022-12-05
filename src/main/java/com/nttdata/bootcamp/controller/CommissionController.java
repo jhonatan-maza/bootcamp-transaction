@@ -1,0 +1,96 @@
+package com.nttdata.bootcamp.controller;
+
+import com.nttdata.bootcamp.entity.Commission;
+import com.nttdata.bootcamp.service.CommissionService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.nttdata.bootcamp.service.TransactionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.Date;
+
+@RestController
+@RequestMapping(value = "/commission")
+public class CommissionController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionController.class);
+    @Autowired
+    private TransactionService transactionService;
+    @Autowired
+    private CommissionService commissionService;
+
+
+
+    @GetMapping("/findAllCommission")
+    public Flux<Commission> findAllCommission() {
+        Flux<Commission> commissions = commissionService.findAll();
+        LOGGER.info("Registered commissions: " + commissions);
+        return commissions;
+    }
+
+    //Transactions by AccountNumber
+    @GetMapping("/findAllCommissionByNumber/{accountNumber}")
+    public Flux<Commission> findAllCommissionByAccountNumber(@PathVariable("accountNumber") String accountNumber) {
+        Flux<Commission> comissions = commissionService.findByAccountNumber(accountNumber);
+        LOGGER.info("Registered commission of account number: "+accountNumber +"-" + comissions);
+        return comissions;
+    }
+    @CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetCommission")
+    //Transaction  by transactionNumber
+    @GetMapping("/findByTransactionNumber/{numberTransaction}")
+    public Mono<Commission> findCommissionByTransactionNumber(@PathVariable("numberTransaction") String numberTransaction) {
+        LOGGER.info("Searching transaction by numberTransaction: " + numberTransaction);
+        return commissionService.findByNumber(numberTransaction);
+    }
+    @CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetCommission")
+    //Save transaction
+    @PostMapping(value = "/saveCommission")
+    public Mono<Commission> saveCommission(@RequestBody Commission dataCommission){
+        Mono.just(dataCommission).doOnNext(t -> {
+
+                    t.setCreationDate(new Date());
+                    t.setModificationDate(new Date());
+
+                }).onErrorReturn(dataCommission).onErrorResume(e -> Mono.just(dataCommission))
+                .onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+        Mono<Commission> commissionMono = commissionService.save(dataCommission);
+        return commissionMono;
+    }
+    @CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetCommission")
+    //Update active
+    @PutMapping("/updateCommission/{numberCode}")
+    public Mono<Commission> updateCommission(@PathVariable("numberCode") String numberCode,
+                                             @Valid @RequestBody Commission dataCommission) {
+        Mono.just(dataCommission).doOnNext(t -> {
+
+                    t.setCode(numberCode);
+                    t.setModificationDate(new Date());
+
+                }).onErrorReturn(dataCommission).onErrorResume(e -> Mono.just(dataCommission))
+                .onErrorMap(f -> new InterruptedException(f.getMessage())).subscribe(x -> LOGGER.info(x.toString()));
+
+        Mono<Commission> updateCommission = commissionService.update(dataCommission);
+        return updateCommission;
+    }
+
+    @CircuitBreaker(name = "transaction", fallbackMethod = "fallBackGetCommission")
+    //Delete customer
+    @DeleteMapping("/deleteCommission/{numberCode}")
+    public Mono<Void> deleteCommission(@PathVariable("numberCode") String numberCode) {
+        LOGGER.info("Deleting Commission by numberTransaction: " + numberCode);
+        Mono<Void> delete = transactionService.delete(numberCode);
+        return delete;
+
+    }
+    private Mono<Commission> fallBackGetCommission(Exception e){
+        Commission activeStaff= new Commission();
+        Mono<Commission> staffMono= Mono.just(activeStaff);
+        return staffMono;
+    }
+}
