@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 import java.util.Date;
@@ -18,7 +20,7 @@ import java.util.Date;
 @RequestMapping(value = "/commission")
 public class CommissionController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommissionController.class);
     @Autowired
     private TransactionService transactionService;
     @Autowired
