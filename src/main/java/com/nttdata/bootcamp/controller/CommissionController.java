@@ -2,6 +2,7 @@ package com.nttdata.bootcamp.controller;
 
 import com.nttdata.bootcamp.entity.Commission;
 import com.nttdata.bootcamp.service.CommissionService;
+import com.nttdata.bootcamp.service.TransactionService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,12 +23,9 @@ import java.util.Date;
 public class CommissionController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommissionController.class);
-<<<<<<< HEAD
 
-=======
     @Autowired
     private TransactionService transactionService;
->>>>>>> 0d511108547aba06161a3ae4ec2d3c1f35191238
     @Autowired
     private CommissionService commissionService;
 
