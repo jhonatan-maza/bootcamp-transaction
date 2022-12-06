@@ -10,14 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 import javax.validation.Valid;
 import java.util.Date;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping(value = "/commission")
 public class CommissionController {
